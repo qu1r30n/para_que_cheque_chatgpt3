@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Visor 360 con Three.js</title>
+    <style>
+        body {
+            margin: 0;
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        var scene = new THREE.Scene();
+        var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 0);
+
+        var geometry = new THREE.SphereGeometry(500, 60, 40);
+        geometry.scale(-1, 1, 1);
+
+        var material = new THREE.MeshBasicMaterial({
+            map: new THREE.TextureLoader().load('1.jpg')
+        });
+
+        var sphere = new THREE.Mesh(geometry, material);
+        scene.add(sphere);
+
+        var renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Agregar eventos de movimiento del ratón
+        var isDragging = false;
+        var previousMousePosition = {
+            x: 0,
+            y: 0
+        };
+
+        document.addEventListener('mousedown', function(event) {
+            isDragging = true;
+        });
+
+        document.addEventListener('mousemove', function(event) {
+            var deltaMove = {
+                x: event.clientX - previousMousePosition.x,
+                y: event.clientY - previousMousePosition.y
+            };
+
+            if (isDragging) {
+                var deltaRotationQuaternion = new THREE.Quaternion()
+                    .setFromEuler(new THREE.Euler(
+                        toRadians(deltaMove.y * 1),
+                        toRadians(deltaMove.x * 1),
+                        0,
+                        'XYZ'
+                    ));
+
+                // Invertir la multiplicación en la dirección Y
+                deltaRotationQuaternion.x *= -1;
+                deltaRotationQuaternion.z *= -1;
+
+                camera.quaternion.multiplyQuaternions(deltaRotationQuaternion, camera.quaternion);
+            }
+
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        });
+
+        document.addEventListener('mouseup', function(event) {
+            isDragging = false;
+        });
+
+        function toRadians(angle) {
+            return angle * (Math.PI / 180);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
